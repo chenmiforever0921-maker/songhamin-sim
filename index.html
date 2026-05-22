@@ -3,159 +3,50 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>松河 × 河民 孩子模拟器</title>
+<title>松河爸爸 × 河民爸爸 孩子模拟器</title>
 <meta name="theme-color" content="#0f0f25" />
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; padding: 0; }
   body {
-    background: #08081a;
+    background: #080814;
     font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
     color: #e8e8f0;
     overscroll-behavior-y: none;
+    min-height: 100vh;
   }
   button { font-family: inherit; -webkit-appearance: none; }
   #root { min-height: 100vh; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .fadein { animation: fadeIn 0.35s ease both; }
 </style>
-</head>
-<body>
-<div id="root"></div>
-
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
+</head>
+<body>
+<div id="root"></div>
 <script type="text/babel" data-presets="react">
 const { useState } = React;
 
-// ────────────────────────────────────────────────
-// 场景数据
-// ────────────────────────────────────────────────
+// ───── 场景 ─────（按年龄从小到大排序：young → all → middle）
 const SCENARIOS = [
   {
-    id: "morning",
-    title: "六点半了",
-    icon: "🌅",
-    age: "all",
-    desc: "松河爸爸走进你房间，语气平静地说：「学校打电话来说今天放假，不用去了。」你一个激灵坐起来……",
+    id: "firstdad", title: "你第一次叫爸爸", icon: "👶", age: "young",
+    desc: "你大约一岁多，刚学会几个音节。两爸都坐在地毯上等你开口——其实他们已经等了好几天。",
     choices: [
-      { text: "弹起来！真的吗！", effect: { qv: -1, sm: 2 }, icon: "😲",
-        result: "松河爸爸看了你一眼：「六点半，去洗脸。」厨房传来河民爸爸压抑的笑声——「哥你太坏了」。" },
-      { text: "识破了，翻身不理他", effect: { qv: 1, sm: -1 }, icon: "😒",
-        result: "沉默两秒。被子被直接掀开。「行，换个方法。」他站在那里等你，偶像包袱维持得很好。" },
-      { text: "喊河民爸爸来救我", effect: { hm: 3, sm: -2, liang: -1 }, icon: "😭",
-        result: "河民爸爸：「松河，你又骗孩子了？」松河爸爸：「我没骗，六点半是真的。」两爸开始扯，你悄悄缩回被子。" },
-      { text: "坐起来揉眼睛不说话", effect: { qv: 2, sm: 1 }, icon: "😪",
-        result: "他给你倒了杯水放在床头柜上，没说话就走了。河民爸爸的早餐做好了，今天有你说过想吃的葱饼。" },
+      { text: "看着松河爸爸喊「爸爸」", effect: { sm: 5, hm: -1, liang: 2 }, icon: "🍼",
+        result: "松河爸爸表情管理失败，转身去洗脸了。河民爸爸笑着鼓掌：「哥你别哭啊。」松河（背对着）：「我没哭。」" },
+      { text: "看着河民爸爸喊「爸爸」", effect: { hm: 5, sm: -1, liang: 2 }, icon: "🥺",
+        result: "河民爸爸立刻抱起你又笑又快哭，松河咳了一声：「下一个该叫我。」河民爸爸笑出声：「你也急？」" },
+      { text: "看着两人一起喊「爸——爸——」", effect: { sm: 4, hm: 4, liang: 6 }, icon: "✨",
+        result: "两人对视三秒，谁都没说话。河民先笑出声，松河赶紧别过头。当天晚上他们各自悄悄录了视频。" },
+      { text: "结果喊了「妈妈」", effect: { sm: -1, hm: -1, liang: 4 }, icon: "😅",
+        result: "两爸面面相觑五秒。河民先笑出眼泪：「你看，所以你是妈。」松河：「闭嘴。」（解锁成就【这下尴尬了】）" },
     ]
   },
   {
-    id: "food",
-    title: "河民爸爸做了好吃的",
-    icon: "🍳",
-    age: "all",
-    desc: "你昨天随口说了一句「有点想吃葱饼」，今天早上厨房飘来香味。河民爸爸认真地问：好不好吃？",
-    choices: [
-      { text: "大力夸！太好吃了！", effect: { hm: 3, liang: 1 }, icon: "🤩",
-        result: "河民爸爸高兴地又去厨房，松河爸爸从旁边探过来：「我也会做。」河民爸爸：「哥你上次把锅烧了。」" },
-      { text: "问能不能再来一份", effect: { hm: 4, qv: -1 }, icon: "🍽️",
-        result: "河民爸爸立刻去做。松河爸爸：「吃那么多。」但没有阻止。他自己也拿了一个。" },
-      { text: "问松河爸爸为什么不做饭", effect: { sm: -2, hm: 2, liang: 2 }, icon: "🤔",
-        result: "松河爸爸：「我……负责其他事。」河民爸爸忍笑失败，趁他没看见对你眨了眨眼。" },
-      { text: "说不饿，不想吃", effect: { hm: -1, sm: 2 }, icon: "😶",
-        result: "河民爸爸：没吃坏肚子？松河爸爸从旁边看了你一眼。此后一小时他偶尔问一句「头疼不」，装作顺口提起。" },
-    ]
-  },
-  {
-    id: "exam",
-    title: "考砸了，卷子要签字",
-    icon: "📝",
-    age: "all",
-    desc: "64分。卷子在书包里。松河爸爸其实已经接到老师电话了，他在等你开口。",
-    choices: [
-      { text: "给松河爸爸签", effect: { sm: 3, qv: 2 }, icon: "😐",
-        result: "他扫完一遍，沉默，「哪里没懂？」不是责骂，是真的要搞清楚。签完顺手在手机里查了补习班信息。" },
-      { text: "给河民爸爸签", effect: { hm: 3, secret: 1 }, icon: "😮‍💨",
-        result: "他先叹气说「没事」，问你这次怎么了，听完说「那这块我们一起看看」。当晚偷偷告诉了松河爸爸。" },
-      { text: "两个都交", effect: { sm: 2, hm: 2, liang: 2 }, icon: "🫡",
-        result: "罕见的联合坐下。不是审讯，更像两人各自在想怎么帮你。气氛意外没那么可怕。" },
-      { text: "继续藏着", effect: { secret: 3, qv: -3 }, icon: "🫠",
-        result: "秘密槽+3。松河爸爸今晚吃饭时看了你一眼，没问。他在等你。" },
-    ]
-  },
-  {
-    id: "trouble",
-    title: "上课调皮，老师叫家长",
-    icon: "🏫",
-    age: "all",
-    desc: "班主任让联系家长。你盯着手机，松河爸爸和河民爸爸的名字在屏幕上等着你选。",
-    choices: [
-      { text: "叫松河爸爸", effect: { sm: 2, qv: 1 }, icon: "🫡",
-        result: "他来，认真道歉。回家让你把经过说清楚，然后五分钟谈话，谈完结束，不再翻。第二天他还是在帮你看作业。" },
-      { text: "叫河民爸爸", effect: { hm: 3, sm: -1 }, icon: "🥺",
-        result: "他先问老师你有没有受委屈。回家先问你，再说道理。但他当晚跟松河爸爸讲了，松河爸爸第二天问了你一句。" },
-      { text: "两个都叫", effect: { sm: 1, hm: 1, liang: -2 }, icon: "😱",
-        result: "两爸一起来了。老师说话时两人都在点头，河民爸爸手悄悄摸了你的头，松河爸爸看见了，没说话。" },
-      { text: "不叫任何人", effect: { secret: 2, qv: -4 }, icon: "🤦",
-        result: "老师后来直接打了河民爸爸的电话。因为他接电话更快。秘密槽+2。" },
-    ]
-  },
-  {
-    id: "sports",
-    title: "亲子运动会来了",
-    icon: "🏃",
-    age: "all",
-    desc: "亲子接力跑，两爸同时举手。他们对视。松河爸爸：猜拳。——其实你早就知道，跑得最快的是松河爸爸。",
-    choices: [
-      { text: "帮河民爸爸说话：「让爸爸跑吧」", effect: { hm: 4, sm: 1, liang: 2 }, icon: "🏆",
-        result: "松河爸爸赢了猜拳，却把名额让出去了：「你跑。」河民爸爸：「哥你明明跑得快。」松河爸爸没接话，全程举着相机给河民拍，一张都没糊。" },
-      { text: "帮松河爸爸说话：「哥跑得最快」", effect: { sm: 4, hm: -1, liang: 1 }, icon: "💪",
-        result: "河民爸爸笑出来：「我承认。」松河爸爸真的认真跑了——但冲线那一刻他先回头找看台。河民爸爸第一个站起来。" },
-      { text: "说让他们自己决定", effect: { liang: 4 }, icon: "✌️",
-        result: "两爸猜拳，松河爸爸赢了，让河民跑。河民爸爸：「你又来这套。」松河爸爸没说话，但你看见他在笑——他赢的时候，从来不是为了自己。" },
-      { text: "你跑那段跌倒了", effect: { sm: 4, hm: 5, liang: 3 }, icon: "🩹",
-        result: "两爸同时冲出来。他们先蹲下来看你，再互相对视——那一瞬间你忽然懂了：他们看着彼此和看着你，是同一种紧张。" },
-    ]
-  },
-  {
-    id: "argue",
-    title: "两爸今天气氛不对",
-    icon: "⚡",
-    age: "all",
-    desc: "你回家时感觉到了。厨房是安静的，但那种安静不对。",
-    choices: [
-      { text: "躲进房间", effect: { secret: 1, liang: -2 }, icon: "🙈",
-        result: "河民爸爸第一个来找你道歉——「吵到你了，不好意思。」松河爸爸没来，但你晚上看见他坐在沙发上发呆。" },
-      { text: "出去说「你们别吵了」", effect: { liang: 6, qv: 3 }, icon: "🕊️",
-        result: "两爸同时停了。河民爸爸先笑了，松河爸爸清了清嗓子。今天家里气氛反而比昨天好，河民爸爸做了顿好的。" },
-      { text: "站到河民爸爸那边", effect: { hm: 2, sm: -5, liang: -8 }, icon: "⚖️",
-        result: "松河爸爸看了你一眼没再说话，去书房了。河民爸爸第一时间追了过去——比你想的还快。回过头他才小声跟你说：「下次别这样，你哥嘴硬，但他在乎的人就那么几个。」" },
-      { text: "假装什么都没发生，正常吃饭", effect: { qv: 1, liang: 1 }, icon: "😶",
-        result: "两爸看了你一眼，也配合你假装正常。河民爸爸又多夹了你两筷子菜，松河爸爸低头喝汤，今晚他们各自放下了。" },
-    ]
-  },
-  {
-    id: "earlylove",
-    title: "早恋被发现了",
-    icon: "💘",
-    age: "middle",
-    desc: "河民爸爸在你书包里发现了一张纸条。你回家时，两爸坐在客厅，面朝你。",
-    choices: [
-      { text: "主动说清楚，对方是谁", effect: { sm: 4, hm: 3, qv: 5 }, icon: "🗣️",
-        result: "松河爸爸（意外理性）：对方是什么样的人？然后说：先把学习搞好。河民爸爸当晚来问有没有受委屈，还给你做了最爱吃的。" },
-      { text: "否认，说是同学的纸条", effect: { secret: 2, qv: -5 }, icon: "🙅",
-        result: "他们信了一半。河民爸爸当天查了你手机。松河爸爸什么都没说，但帮你多留了一盏灯。" },
-      { text: "反问：「你们当年也早恋吧？」", effect: { liang: 5, qv: -1 }, icon: "😏",
-        result: "两爸短暂对视。河民爸爸笑了，松河爸爸没笑但也没绷住。今天以全家出去吃了顿好的收尾。成就解锁可能！" },
-      { text: "沉默，等他们问", effect: { sm: -1, hm: -1 }, icon: "😶",
-        result: "沉默有时候比承认还难熬。松河爸爸先开口——语气出乎意料平静。河民爸爸反而是最紧张的那个。" },
-    ]
-  },
-  {
-    id: "thunder",
-    title: "半夜打雷，你很怕",
-    icon: "⛈️",
-    age: "young",
+    id: "thunder", title: "半夜打雷，你很怕", icon: "⛈️", age: "young",
     desc: "你五岁，半夜打雷，悄悄跑去爸爸们的房间。门缝有光——他们还没睡。",
     choices: [
       { text: "扑向松河爸爸", effect: { sm: 5 }, icon: "🌙",
@@ -169,10 +60,119 @@ const SCENARIOS = [
     ]
   },
   {
-    id: "birthday",
-    title: "今天是我生日",
-    icon: "🎂",
-    age: "all",
+    id: "paint", title: "画了「两个爸爸」拿回家", icon: "🎨", age: "young",
+    desc: "幼儿园美术课，老师让画家庭。你画了两个爸爸，把自己画在中间。",
+    choices: [
+      { text: "把画拿给两爸一起看", effect: { hm: 5, sm: 5, liang: 6 }, icon: "💞",
+        result: "两爸看到画的时候安静了三秒。河民爸爸先红了眼，松河爸爸默默把画夹进了相册——夹在他们最早的一张合照旁边。（解锁【家庭画】）" },
+      { text: "只给河民爸爸看", effect: { hm: 4, sm: -3, liang: -1 }, icon: "🌷",
+        result: "松河爸爸瞄了一眼，没说话。河民爸爸晚上悄悄问你：「下次画上你哥好不好？他今天有点闷闷的。」" },
+      { text: "只给松河爸爸看", effect: { sm: 4, hm: -1, liang: -1 }, icon: "📌",
+        result: "松河爸爸把画贴在了书房墙上正中间。河民爸爸笑着夸了你，但晚上没怎么说话。第二天画的位置被悄悄挪到了客厅。" },
+      { text: "老师问「为什么有两个爸爸」，你不知道怎么答", effect: { secret: 1, qv: 1 }, icon: "🤔",
+        result: "老师没追问，但当晚两爸接到了电话。河民爸爸蹲下来认真问你：「你想怎么回答？我们一起想。」" },
+    ]
+  },
+  {
+    id: "nickname", title: "无意中喊出哥哥的小名", icon: "🤭", age: "young",
+    desc: "你听河民爸爸叫了一句「松松」，第二天在外面也跟着这么喊。",
+    choices: [
+      { text: "当着外人喊「松松」", effect: { sm: -3, liang: -1 }, icon: "😬",
+        result: "松河爸爸维持微笑三秒，回家后用最温柔的语气说：「那个不能在外面叫。」河民爸爸在他背后捂嘴笑到肩膀抖。" },
+      { text: "在家偷偷喊", effect: { hm: 3, sm: 1, liang: 3 }, icon: "🌚",
+        result: "松河爸爸瞪你一眼，但没真的生气。河民爸爸偷偷给你比了个赞——你跟他成了同盟。（解锁【哥哥的小名】）" },
+      { text: "问河民爸爸为什么这样叫", effect: { hm: 4, liang: 4 }, icon: "💬",
+        result: "河民爸爸笑了：「秘密。等你长大告诉你。」松河爸爸在沙发上：「别告诉他，永远别告诉他。」河民冲你眨了下眼。" },
+      { text: "问松河爸爸喜欢这个昵称吗", effect: { sm: -2, liang: 4 }, icon: "😏",
+        result: "松河爸爸：「不喜欢。」但你转头看见他嘴角在抽。第二天河民又这么叫了，他没拦——他只在外面拦。" },
+    ]
+  },
+  {
+    id: "morning", title: "六点半了", icon: "🌅", age: "all",
+    desc: "松河爸爸走进你房间，语气平静地说：「学校打电话来说今天放假，不用去了。」你一个激灵坐起来……",
+    choices: [
+      { text: "弹起来！真的吗！", effect: { qv: -1, sm: 2 }, icon: "😲",
+        result: "松河爸爸看了你一眼：「六点半，去洗脸。」厨房传来河民爸爸压抑的笑声——「哥你太坏了」。" },
+      { text: "识破了，翻身不理他", effect: { qv: 1, sm: -1 }, icon: "😒",
+        result: "沉默两秒。被子被直接掀开。「行，换个方法。」他站在那里等你，偶像包袱维持得很好。" },
+      { text: "喊河民爸爸来救我", effect: { hm: 3, sm: -2, liang: -1 }, icon: "😭",
+        result: "河民爸爸：「松河，你又骗孩子了？」松河爸爸：「我没骗，六点半是真的。」两爸开始扯，你悄悄缩回被子。" },
+      { text: "坐起来揉眼睛不说话", effect: { qv: 2, sm: 1 }, icon: "😪",
+        result: "他给你倒了杯水放在床头柜上，没说话就走了。河民爸爸的早餐做好了，今天有你说过想吃的葱饼。" },
+    ]
+  },
+  {
+    id: "food", title: "河民爸爸做了好吃的", icon: "🍳", age: "all",
+    desc: "你昨天随口说了一句「有点想吃葱饼」，今天早上厨房飘来香味。河民爸爸认真地问：好不好吃？",
+    choices: [
+      { text: "大力夸！太好吃了！", effect: { hm: 3, liang: 1 }, icon: "🤩",
+        result: "河民爸爸高兴地又去厨房，松河爸爸从旁边探过来：「我也会做。」河民爸爸：「哥你上次把锅烧了。」" },
+      { text: "问能不能再来一份", effect: { hm: 4, qv: -1 }, icon: "🍽️",
+        result: "河民爸爸立刻去做。松河爸爸：「吃那么多。」但没有阻止。他自己也拿了一个。" },
+      { text: "问松河爸爸为什么不做饭", effect: { sm: -2, hm: 2, liang: 2 }, icon: "🤔",
+        result: "松河爸爸：「我……负责其他事。」河民爸爸忍笑失败，趁他没看见对你眨了眨眼。" },
+      { text: "说不饿，不想吃", effect: { hm: -1, sm: 2 }, icon: "😶",
+        result: "河民爸爸：没吃坏肚子？松河爸爸从旁边看了你一眼。此后一小时他偶尔问一句「头疼不」，装作顺口提起。" },
+    ]
+  },
+  {
+    id: "exam", title: "考砸了，卷子要签字", icon: "📝", age: "all",
+    desc: "64分。卷子在书包里。松河爸爸其实已经接到老师电话了，他在等你开口。",
+    choices: [
+      { text: "给松河爸爸签", effect: { sm: 3, qv: 2 }, icon: "😐",
+        result: "他扫完一遍，沉默，「哪里没懂？」不是责骂，是真的要搞清楚。签完顺手在手机里查了补习班信息。" },
+      { text: "给河民爸爸签", effect: { hm: 3, secret: 1 }, icon: "😮‍💨",
+        result: "他先叹气说「没事」，问你这次怎么了，听完说「那这块我们一起看看」。当晚偷偷告诉了松河爸爸。" },
+      { text: "两个都交", effect: { sm: 2, hm: 2, liang: 2 }, icon: "🫡",
+        result: "罕见的联合坐下。不是审讯，更像两人各自在想怎么帮你。气氛意外没那么可怕。" },
+      { text: "继续藏着", effect: { secret: 3, qv: -3 }, icon: "🫠",
+        result: "秘密槽+3。松河爸爸今晚吃饭时看了你一眼，没问。他在等你。" },
+    ]
+  },
+  {
+    id: "trouble", title: "上课调皮，老师叫家长", icon: "🏫", age: "all",
+    desc: "班主任让联系家长。你盯着手机，松河爸爸和河民爸爸的名字在屏幕上等着你选。",
+    choices: [
+      { text: "叫松河爸爸", effect: { sm: 2, qv: 1 }, icon: "🫡",
+        result: "他来，认真道歉。回家让你把经过说清楚，然后五分钟谈话，谈完结束，不再翻。第二天他还是在帮你看作业。" },
+      { text: "叫河民爸爸", effect: { hm: 3, sm: -1 }, icon: "🥺",
+        result: "他先问老师你有没有受委屈。回家先问你，再说道理。但他当晚跟松河爸爸讲了，松河爸爸第二天问了你一句。" },
+      { text: "两个都叫", effect: { sm: 1, hm: 1, liang: -2 }, icon: "😱",
+        result: "两爸一起来了。老师说话时两人都在点头，河民爸爸手悄悄摸了你的头，松河爸爸看见了，没说话。" },
+      { text: "不叫任何人", effect: { secret: 2, qv: -4 }, icon: "🤦",
+        result: "老师后来直接打了河民爸爸的电话。因为他接电话更快。秘密槽+2。" },
+    ]
+  },
+  {
+    id: "sports", title: "亲子运动会来了", icon: "🏃", age: "all",
+    desc: "亲子接力跑，两爸同时举手。他们对视。松河爸爸：猜拳。——其实你早就知道，跑得最快的是松河爸爸。",
+    choices: [
+      { text: "帮河民爸爸说话：「让爸爸跑吧」", effect: { hm: 4, sm: 1, liang: 2 }, icon: "🏆",
+        result: "松河爸爸赢了猜拳，却把名额让出去了：「你跑。」河民爸爸：「哥你明明跑得快。」松河爸爸没接话，全程举着相机给河民拍，一张都没糊。" },
+      { text: "帮松河爸爸说话：「哥跑得最快」", effect: { sm: 4, hm: -1, liang: 1 }, icon: "💪",
+        result: "河民爸爸笑出来：「我承认。」松河爸爸真的认真跑了——但冲线那一刻他先回头找看台。河民爸爸第一个站起来。" },
+      { text: "说让他们自己决定", effect: { liang: 4 }, icon: "✌️",
+        result: "两爸猜拳，松河爸爸赢了，让河民跑。河民爸爸：「你又来这套。」松河爸爸没说话，但你看见他在笑——他赢的时候，从来不是为了自己。" },
+      { text: "你跑那段跌倒了", effect: { sm: 4, hm: 5, liang: 3 }, icon: "🩹",
+        result: "两爸同时冲出来。他们先蹲下来看你，再互相对视——那一瞬间你忽然懂了：他们看着彼此和看着你，是同一种紧张。" },
+    ]
+  },
+  {
+    id: "argue", title: "两爸今天气氛不对", icon: "⚡", age: "all",
+    desc: "你回家时感觉到了。厨房是安静的，但那种安静不对。",
+    choices: [
+      { text: "躲进房间", effect: { secret: 1, liang: -2 }, icon: "🙈",
+        result: "河民爸爸第一个来找你道歉——「吵到你了，不好意思。」松河爸爸没来，但你晚上看见他坐在沙发上发呆。" },
+      { text: "出去说「你们别吵了」", effect: { liang: 6, qv: 3 }, icon: "🕊️",
+        result: "两爸同时停了。河民爸爸先笑了，松河爸爸清了清嗓子。今天家里气氛反而比昨天好，河民爸爸做了顿好的。" },
+      { text: "站到河民爸爸那边", effect: { hm: 2, sm: -5, liang: -8 }, icon: "⚖️",
+        result: "松河爸爸看了你一眼没再说话，去书房了。河民爸爸第一时间追了过去——比你想的还快。回过头他才小声跟你说：「下次别这样，你哥嘴硬，但他在乎的人就那么几个。」" },
+      { text: "假装什么都没发生，正常吃饭", effect: { qv: 1, liang: 1 }, icon: "😶",
+        result: "两爸看了你一眼，也配合你假装正常。河民爸爸又多夹了你两筷子菜，松河爸爸低头喝汤，今晚他们各自放下了。" },
+    ]
+  },
+  {
+    id: "birthday", title: "今天是我生日", icon: "🎂", age: "all",
     desc: "你一早醒来，房间里有彩带——挂歪了，但很认真。厨房飘来蛋糕的香气。",
     choices: [
       { text: "去谢谢河民爸爸", effect: { hm: 5, liang: 2 }, icon: "🎈",
@@ -185,21 +185,202 @@ const SCENARIOS = [
         result: "河民爸爸：走走走！松河爸爸：……行吧。今天是他今年第三次破例。河民爸爸悄悄给你比了个v。" },
     ]
   },
+  {
+    id: "midnight_kitchen", title: "半夜偷看到深夜厨房", icon: "🍜", age: "all",
+    desc: "你半夜起来喝水，路过厨房——灯亮着。你停下脚步，听见低声说话。",
+    choices: [
+      { text: "悄悄看一眼就走", effect: { liang: 5, secret: -1 }, icon: "👀",
+        result: "河民爸爸在煮泡面，松河爸爸坐在台子边刷手机，脚搭在他椅子上。河民夹了一筷子递过去，松河没看就张嘴。你回了房间，心里很暖。（解锁【深夜厨房】）" },
+      { text: "凑过去蹭一口", effect: { hm: 4, sm: 2, liang: 3 }, icon: "🍜",
+        result: "河民爸爸：「你怎么醒了？」立刻给你也下了一碗。松河爸爸：「这小孩鼻子真灵。」但他帮你把筷子摆好了。" },
+      { text: "假装喝水溜回去", effect: { secret: 1, sm: 1 }, icon: "🚰",
+        result: "你装作没看见，但你听见河民爸爸轻声说了句：「他今天看起来是不是又长高了。」松河：「嗯。」两个字，但他的语气你这辈子都记得。" },
+      { text: "听到他们提到你", effect: { liang: 5, qv: 1 }, icon: "💭",
+        result: "河民：「他今天数学题做得好认真。」松河：「嗯，比我小时候强。」河民：「你小时候不行吗？」松河：「……换个话题。」你笑出声，他们听见了。" },
+    ]
+  },
+  {
+    id: "business_trip", title: "松河爸爸出差回来", icon: "🧳", age: "all",
+    desc: "他出差五天，今晚回来。河民爸爸从下午就开始做菜，你也在客厅等门铃。",
+    choices: [
+      { text: "听见门响第一个冲过去", effect: { sm: 5, liang: 2 }, icon: "🏃",
+        result: "松河爸爸把行李往边上一搁先抱了你，但视线越过你头顶看着河民。河民站在厨房门口擦手，没动，但笑了。" },
+      { text: "假装没听见，让河民先开门", effect: { hm: 3, sm: 2, liang: 4 }, icon: "🚪",
+        result: "河民开门那一下，松河愣了半秒——可能因为他一直没等到这个画面。然后他把河民先抱了一下，再来抱你。你假装没看见。" },
+      { text: "翻他行李箱找礼物", effect: { sm: 3, qv: -1 }, icon: "🎁",
+        result: "他确实带了——你提过的那种零食，还有一个没拆封的小玩偶。「河民非要让我买的。」河民在厨房：「明明是你自己想买。」" },
+      { text: "问他想不想河民爸爸了", effect: { sm: -1, hm: 3, liang: 5 }, icon: "💬",
+        result: "松河沉默两秒：「想你。」你：「那河民爸爸呢？」他终于看了厨房一眼：「……他自己心里知道。」河民在厨房没回头，但你看见他笑了。" },
+    ]
+  },
+  {
+    id: "haircut", title: "他们在客厅互相剪头发", icon: "✂️", age: "all",
+    desc: "周日下午，松河爸爸坐在椅子上闭着眼，河民爸爸拿着剪刀认真在他脑后剪。",
+    choices: [
+      { text: "凑过去围观", effect: { liang: 4, hm: 2 }, icon: "👁️",
+        result: "河民：「别动，再动剪歪了。」松河：「你已经剪歪了。」河民：「才没有。」你看着他指尖落在松河耳后的样子——很轻，很慢。" },
+      { text: "问河民爸爸学过吗", effect: { hm: 3, liang: 2 }, icon: "❓",
+        result: "河民：「没学过，但只剪他的我会。」松河（闭着眼）：「因为他从来不让别人碰我头发。」河民笑着拍了他后脑勺一下：「闭嘴。」" },
+      { text: "提议自己也剪个", effect: { hm: 4, qv: 2 }, icon: "💇",
+        result: "河民：「我不敢，让你哥来。」松河立刻睁开眼：「……我也不敢。」最后还是河民给你修了一下刘海，松河在旁边监工，比剪自己头发还紧张。" },
+      { text: "偷拍一张发到家庭群", effect: { liang: 6, secret: -1 }, icon: "📷",
+        result: "群里只有你们三个人。河民秒回：「这小孩。」松河没说话，但他后来把那张照片设了置顶。（解锁【家庭群偷拍】）" },
+    ]
+  },
+  {
+    id: "fanmeet", title: "粉丝在街上认出他们了", icon: "📸", age: "all",
+    desc: "你三个人逛街，被几个粉丝认出来。两爸默契地把你护在中间。",
+    choices: [
+      { text: "拽紧河民爸爸的手", effect: { hm: 4, sm: -1 }, icon: "🤝",
+        result: "他立刻反握你，朝粉丝点了下头：「不好意思。」松河爸爸已经在前面挡视线了。粉丝很懂，没拍你。回家两爸都没怪你紧张。" },
+      { text: "拽紧松河爸爸的手", effect: { sm: 4, hm: -1 }, icon: "💪",
+        result: "他几乎是用半边身体把你挡住的。河民走在另一边时不时回头确认你状态。事后他说：「你哥那一下，我感动了一整晚。」" },
+      { text: "勇敢挥手打招呼", effect: { qv: -2, liang: -1, secret: 1 }, icon: "👋",
+        result: "两爸瞬间表情管理。回家两人坐你面前认真说：「这件事不是你的错，但下次我们一起决定。」语气都比平时认真。" },
+      { text: "什么都没做，让两爸处理", effect: { liang: 4, sm: 2, hm: 2 }, icon: "🛡️",
+        result: "两爸全程同步——一个挡前一个挡后，把你护着上车。车里河民先开口：「吓到没？」松河没说话，伸手揉了下你的头。" },
+    ]
+  },
+  {
+    id: "sick", title: "你发烧了39度", icon: "🤒", age: "all",
+    desc: "凌晨两点，你烧得迷迷糊糊。你听见房间外有动静——两爸都醒着。",
+    choices: [
+      { text: "想要松河爸爸抱", effect: { sm: 6, hm: 1 }, icon: "🫂",
+        result: "他抱起你时手稳得不行，只是耳根有点红。河民爸爸已经在准备温水和药。这是你第一次发现，松河爸爸抱你的姿势其实练过。" },
+      { text: "想要河民爸爸抱", effect: { hm: 6, sm: 1 }, icon: "🤱",
+        result: "他立刻坐到你床边，手贴着你额头，掌心很温。松河爸爸去开车——是的，他已经在准备送你去医院了。河民：「不用，能扛过去。」松河：「万一呢。」" },
+      { text: "什么都不要，只想睡", effect: { qv: 3, liang: 4 }, icon: "💤",
+        result: "你迷迷糊糊看见他俩并排坐在你床边，谁都没说话。河民握着你的手，松河手放在河民手背上——他们以为你睡着了。" },
+      { text: "哭着说「我怕」", effect: { hm: 5, sm: 5, liang: 5 }, icon: "😢",
+        result: "两人同时倾身。河民：「不怕，爸爸们在。」松河：「听他的。」——这五个字，他这辈子说得最软的一次。（解锁【最软的一次】）" },
+    ]
+  },
+  {
+    id: "sleeptalk", title: "你听见他们的悄悄话", icon: "💭", age: "all",
+    desc: "深夜你起夜，路过爸爸们房间，门没关严。",
+    choices: [
+      { text: "听见松河说「还好有你」", effect: { liang: 8, secret: -1 }, icon: "💗",
+        result: "你愣在门外。河民没接话，只是轻轻叹气：「你今天怎么这么矫情。」松河：「就这一句，过期不候。」河民笑出声。你悄悄走了，眼眶有点热。（解锁【还好有你】）" },
+      { text: "听见他们在说你", effect: { liang: 5, hm: 2, sm: 2 }, icon: "👂",
+        result: "河民：「你说他像不像我？」松河：「不像，你比他乖。」河民：「……你今天嘴巴怎么这么甜。」松河：「困了，睡。」" },
+      { text: "听见两人在斗嘴", effect: { liang: 3 }, icon: "😂",
+        result: "河民：「你脚冰。」松河：「冰你不也不让我挪。」河民：「…那你别挪。」你笑出声，赶紧捂住嘴溜走。" },
+      { text: "立刻溜走没听", effect: { qv: 3 }, icon: "🚪",
+        result: "你不想偷听他们的事——这是你这个年纪能给他们的最大尊重。第二天早上河民给你做了你最爱吃的早餐，没问原因。" },
+    ]
+  },
+  {
+    id: "schoolgossip", title: "同学说「两个爸爸好奇怪」", icon: "🥀", age: "middle",
+    desc: "你升初中第一周，有同学在背后议论。回家时你心情不好。",
+    choices: [
+      { text: "回家告诉河民爸爸", effect: { hm: 5, liang: 3 }, icon: "🥺",
+        result: "他没立刻安慰你，先问：「你心里怎么想？」听完你说完，他才拥抱你：「不奇怪。是这个家最好的事。」那天他做了一桌你最爱吃的。" },
+      { text: "回家告诉松河爸爸", effect: { sm: 5, liang: 2 }, icon: "💼",
+        result: "他没说太多软话，只问：「你想换学校吗？」然后：「不换的话，你哥我教你怎么应付。」那天他陪你打了一小时游戏，全程话题没绕开。" },
+      { text: "谁都没说，自己消化", effect: { secret: 3, qv: -2 }, icon: "🌧️",
+        result: "你以为藏住了。但河民那晚把你最爱的水果切好放门口，松河第二天主动开车送你上学——他们都知道，只是在等你开口。" },
+      { text: "和同学吵起来了", effect: { qv: -3, sm: 2, hm: 2, liang: 5 }, icon: "🔥",
+        result: "老师叫了家长。两爸一起来，全程冷静，但松河临走前冷冷看了那个同学一眼。回家路上河民握你手：「谢谢你护我们。」（解锁【守护者】）" },
+    ]
+  },
+  {
+    id: "rebellion", title: "青春期的一次大吵", icon: "🌩️", age: "middle",
+    desc: "你十四岁，因为手机被收了，对松河爸爸吼了出来。河民爸爸站在中间。",
+    choices: [
+      { text: "继续顶嘴", effect: { sm: -6, liang: -3, secret: 2 }, icon: "💢",
+        result: "松河沉默地把手机放回你桌上，转身走了。河民没追这次——他坐到你面前：「你刚才那句，伤到他了。下次只对我说，行不行？」" },
+      { text: "甩门进房间", effect: { sm: -3, hm: -2, liang: -2 }, icon: "🚪",
+        result: "你听见客厅没声音。两小时后河民敲门：「吃饭。」晚饭桌上松河没看你，但你的菜量比平时多。第二天他给你回了手机，没多说一句。" },
+      { text: "停下来道歉", effect: { sm: 6, hm: 3, liang: 5, qv: 4 }, icon: "🙇",
+        result: "松河没立刻回应——他不是要让你难堪，他在消化。然后他说：「手机我会还你，规则我们再谈。」那一刻你忽然明白：道歉真的需要勇气，但你做对了。（解锁【真的长大了】）" },
+      { text: "忍着眼泪不说话", effect: { sm: -1, hm: 4, liang: 2 }, icon: "😢",
+        result: "河民先看出来了，过来抱你。松河看了一眼，转身去阳台抽了一支烟——他几年没抽了。回来时他把手机放你手边：「对不起，刚才太凶了。」" },
+    ]
+  },
+  {
+    id: "comingout", title: "你想问他们当年怎么开始的", icon: "📖", age: "middle",
+    desc: "你十五岁，开始隐约懂他们的故事。某天晚饭后，你鼓起勇气问。",
+    choices: [
+      { text: "问松河：「你什么时候确定的？」", effect: { sm: 5, liang: 6 }, icon: "🌅",
+        result: "他想了很久：「比我承认得早很多年。」河民坐在旁边没说话，但他眼眶红了。你从来没见过他那个表情。" },
+      { text: "问河民：「你害怕过吗？」", effect: { hm: 5, liang: 6 }, icon: "🌊",
+        result: "他笑了：「怕过。但你哥比我还怕，我不能让他一个人怕。」松河放下筷子，去厨房洗碗——其实碗已经洗过了。" },
+      { text: "问「如果当年没在一起会怎样」", effect: { liang: 8, secret: -1 }, icon: "💫",
+        result: "两人都安静了。最后是松河开口：「不可能没在一起。」河民：「嗯，所以这道题不成立。」你忽然觉得自己好幸运能听到这句话。（解锁【不成立的题】）" },
+      { text: "改口说「算了，当我没问」", effect: { qv: 3, liang: 3 }, icon: "🤐",
+        result: "松河：「想问就问，别憋。」河民：「你今天问了一半，明天再问后一半也行。」——这就是这个家允许你慢慢长大的方式。" },
+    ]
+  },
+  {
+    id: "earlylove", title: "早恋被发现了", icon: "💘", age: "middle",
+    desc: "河民爸爸在你书包里发现了一张纸条。你回家时，两爸坐在客厅，面朝你。",
+    choices: [
+      { text: "主动说清楚，对方是谁", effect: { sm: 4, hm: 3, qv: 5 }, icon: "🗣️",
+        result: "松河爸爸（意外理性）：对方是什么样的人？然后说：先把学习搞好。河民爸爸当晚来问有没有受委屈，还给你做了最爱吃的。" },
+      { text: "否认，说是同学的纸条", effect: { secret: 2, qv: -5 }, icon: "🙅",
+        result: "他们信了一半。河民爸爸当天查了你手机。松河爸爸什么都没说，但帮你多留了一盏灯。" },
+      { text: "反问：「你们当年也早恋吧？」", effect: { liang: 5, qv: -1 }, icon: "😏",
+        result: "两爸短暂对视。河民爸爸笑了，松河爸爸没笑但也没绷住。今天以全家出去吃了顿好的收尾。成就解锁可能！" },
+      { text: "沉默，等他们问", effect: { sm: -1, hm: -1 }, icon: "😶",
+        result: "沉默有时候比承认还难熬。松河爸爸先开口——语气出乎意料平静。河民爸爸反而是最紧张的那个。" },
+    ]
+  },
 ];
+
+const AGE_RANK = { young: 1, all: 2, middle: 3 };
+const AGE_MAP = { young: "👶 幼年期（3-6岁）", middle: "🏫 少年期（13-15岁）", all: "全年龄" };
 
 const STAT_CFG = {
   qv:     { label: "乖巧值",       max: 50, color: "#6ee7b7", icon: "😇" },
   sm:     { label: "松河爸爸亲密", max: 50, color: "#93c5fd", icon: "🧊" },
   hm:     { label: "河民爸爸亲密", max: 50, color: "#fca5a5", icon: "🔥" },
   liang:  { label: "两爸关系值",   max: 50, color: "#c4b5fd", icon: "💞" },
-  secret: { label: "秘密槽",       max: 10, color: "#fde68a", icon: "🤫", reverse: true },
+  secret: { label: "秘密槽",       max: 10, color: "#fde68a", icon: "🤫" },
 };
 
-const AGE_MAP = { young: "👶 幼年期（3-6岁）", middle: "🏫 少年期（13-15岁）", all: "全年龄" };
+// ───── 结局系统 ─────
+const ENDINGS = [
+  { id: "ring", name: "戒指见证", icon: "💍",
+    cond: (s, a) => a.has("戒指见证"),
+    text: "你永远记得那个画面：他们以为你睡了，河民爸爸掏出一枚戒指，松河爸爸难得没说话。多年以后你长大了，那两双手仍然牵在一起。这个家最幸福的秘密，是你替他们守着。" },
+  { id: "perfect", name: "完美家庭", icon: "🏆",
+    cond: (s) => s.sm >= 35 && s.hm >= 35 && s.liang >= 35 && s.secret <= 2,
+    text: "两爸都信任你，你也信任他们。家里没有秘密，也没有需要绕开的话题。你长大成人那天，他们一起出现在你身后——一个依然要强，一个依然温柔，依然彼此最重要，也依然把你护在中间。" },
+  { id: "secret_explosion", name: "秘密爆发", icon: "💥",
+    cond: (s) => s.secret >= 8,
+    text: "秘密终于全部摊开。两爸沉默了五秒，河民爸爸先开口：「为什么不早说？」松河爸爸没问问题，他只是看着你。这一晚很长，但说完之后，你睡得是最近最好的一觉。" },
+  { id: "broken", name: "家庭裂痕", icon: "🌧️",
+    cond: (s) => s.liang <= 8,
+    text: "两爸之间的话越来越少。这不是他们的本意，但他们都太骄傲了，不肯先开口。直到你坐到他们中间，把两个人的手放在一起。河民爸爸先红了眼，松河爸爸沉默了很久，最后说了一句：「对不起。」" },
+  { id: "river_lean", name: "偏心河民", icon: "🔥",
+    cond: (s) => s.hm - s.sm >= 18,
+    text: "你和河民爸爸更亲，这不是秘密。但你慢慢发现，每次你冷落松河爸爸之后，河民爸爸都会悄悄陪他坐久一点。你心里渐渐明白：在这个家，没有人需要被偏心，因为他们已经把彼此偏成了第一。" },
+  { id: "song_lean", name: "偏心松河", icon: "🧊",
+    cond: (s) => s.sm - s.hm >= 18,
+    text: "你和松河爸爸更像。同样要强，同样不爱说软话。但每当你和他冷战时，最先来敲门的总是河民爸爸——他懂你们父子俩的语言。原来你和松河爸爸的相似，最早是河民爸爸看穿的。" },
+  { id: "kitchen", name: "深夜厨房", icon: "🍜",
+    cond: (s) => s.hm >= 30 && s.liang >= 25,
+    text: "很多年后你回想起这个家，第一个画面总是深夜厨房：河民爸爸在做夜宵，松河爸爸坐在台子边刷手机，偶尔夹一筷子。他们以为你睡了。其实你看了很多年。" },
+  { id: "growing_up", name: "真的长大了", icon: "🌱",
+    cond: (s, a) => a.has("真的长大了") || a.has("守护者"),
+    text: "今天的你，开始懂得在爱面前低头，也开始懂得替他们挡风。你回头才发现——他们没有教你怎么强，他们教你的是怎么软。这件事，是这个家给你的、最不动声色的礼物。" },
+  { id: "untold_question", name: "不成立的题", icon: "💫",
+    cond: (s, a) => a.has("不成立的题"),
+    text: "你问了那个他们也许从没和别人正面回答过的问题。他们没告诉你完整的故事，但你已经听见了答案——「不可能没在一起」。你长到这一步，他们终于愿意把这句话交给你保管。" },
+  { id: "soft_moment", name: "最软的一次", icon: "🪶",
+    cond: (s, a) => a.has("最软的一次") || a.has("还好有你"),
+    text: "你见到了他们最不像他们的瞬间——松河爸爸的「听他的」，藏在你 39 度高烧的那一夜；松河爸爸的「还好有你」，被你隔着一道门听见。那两秒，比你这辈子见过的所有甜言蜜语都重。" },
+  { id: "ordinary", name: "平凡的一天", icon: "🌤️",
+    cond: () => true,
+    text: "今天没什么大事。松河爸爸早上骗你起床，河民爸爸做了你爱吃的。你考试一般，吵架普通，被夸了一句也没怎么放心上。但你记住了——这种平凡，已经是最好的版本。" },
+];
+
+const pickEnding = (stats, achv) => ENDINGS.find(e => e.cond(stats, achv)) || ENDINGS[ENDINGS.length - 1];
 
 function StatBar({ id, value }) {
   const cfg = STAT_CFG[id];
   const pct = Math.min(100, (value / cfg.max) * 100);
+  const danger = id === "secret" && value >= 5;
   return (
     <div style={{ marginBottom: 9 }}>
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#9ca3af", marginBottom: 3 }}>
@@ -209,7 +390,7 @@ function StatBar({ id, value }) {
       <div style={{ background: "rgba(255,255,255,0.07)", borderRadius: 6, height: 7 }}>
         <div style={{
           width: `${pct}%`, height: "100%",
-          background: id === "secret" && value >= 5 ? "#ef4444" : cfg.color,
+          background: danger ? "#ef4444" : cfg.color,
           borderRadius: 6, transition: "width 0.5s ease",
           boxShadow: `0 0 6px ${cfg.color}66`,
         }} />
@@ -221,13 +402,18 @@ function StatBar({ id, value }) {
 function App() {
   const [stats, setStats] = useState({ qv: 20, sm: 20, hm: 20, liang: 25, secret: 0 });
   const [scene, setScene] = useState(null);
-  const [phase, setPhase] = useState("home");
+  const [phase, setPhase] = useState("home"); // home | scene | result | ending
   const [result, setResult] = useState(null);
   const [chosenText, setChosenText] = useState("");
   const [chosenIcon, setChosenIcon] = useState("");
   const [chosenEffect, setChosenEffect] = useState({});
   const [history, setHistory] = useState([]);
   const [achv, setAchv] = useState(new Set());
+  const [playedToday, setPlayedToday] = useState(new Set());
+  const [maxAge, setMaxAge] = useState(2); // 当前已解锁年龄阶段（开局 young+all 均解锁）
+  const [ending, setEnding] = useState(null);
+  // 每天的场景上限：8-12 随机
+  const [dailyLimit, setDailyLimit] = useState(() => 8 + Math.floor(Math.random() * 5));
 
   const applyEffect = (effect, choiceText, prevStats) => {
     const next = { ...prevStats };
@@ -242,21 +428,58 @@ function App() {
     if (choiceText === "偷偷看两爸说悄悄话") newAchv.add("戒指见证");
     if (choiceText === "出去说「你们别吵了」") newAchv.add("小大人");
     if (next.sm > 30 && next.hm > 30) newAchv.add("两个爸爸");
+    if (choiceText === "说让他们自己决定" && scene && scene.id === "sports") newAchv.add("他让出去了");
+    if (choiceText === "站到河民爸爸那边") newAchv.add("他先去找他");
+    // 新增成就（按选项文本匹配）
+    if (choiceText === "结果喊了「妈妈」") newAchv.add("这下尴尬了");
+    if (choiceText === "把画拿给两爸一起看") newAchv.add("家庭画");
+    if (choiceText === "在家偷偷喊") newAchv.add("哥哥的小名");
+    if (choiceText === "悄悄看一眼就走") newAchv.add("深夜厨房");
+    if (choiceText === "偷拍一张发到家庭群") newAchv.add("家庭群偷拍");
+    if (choiceText === "哭着说「我怕」") newAchv.add("最软的一次");
+    if (choiceText === "听见松河说「还好有你」") newAchv.add("还好有你");
+    if (choiceText === "和同学吵起来了") newAchv.add("守护者");
+    if (choiceText === "停下来道歉") newAchv.add("真的长大了");
+    if (choiceText === "问「如果当年没在一起会怎样」") newAchv.add("不成立的题");
     setAchv(newAchv);
     setStats(next);
   };
 
+  // 推进逻辑：玩到 1/3 解锁少年期；池子用「≤ 当前 maxAge」而非「= maxAge」，避免开头被 young 4 个场景困住
+  const unlockMiddle = playedToday.size >= Math.max(3, Math.floor(dailyLimit / 3));
+  const effectiveMaxAge = unlockMiddle ? 3 : maxAge;
+  const availableScenes = SCENARIOS.filter(s =>
+    !playedToday.has(s.id) && AGE_RANK[s.age] <= effectiveMaxAge
+  );
+
   const pickRandom = () => {
-    const idx = Math.floor(Math.random() * SCENARIOS.length);
-    setScene(SCENARIOS[idx]);
+    let pool = availableScenes;
+    if (pool.length === 0) {
+      // 当前年龄段全玩过：尝试解锁下一阶段
+      const futureAvailable = SCENARIOS.filter(s => !playedToday.has(s.id) && AGE_RANK[s.age] > effectiveMaxAge);
+      if (futureAvailable.length === 0) {
+        finishDay();
+        return;
+      }
+      const minNext = Math.min(...futureAvailable.map(s => AGE_RANK[s.age]));
+      pool = SCENARIOS.filter(s => !playedToday.has(s.id) && AGE_RANK[s.age] <= minNext);
+      setMaxAge(minNext);
+    } else if (unlockMiddle && maxAge < 3) {
+      setMaxAge(3);
+    }
+    const idx = Math.floor(Math.random() * pool.length);
+    setScene(pool[idx]);
     setResult(null); setPhase("scene");
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const pickById = (id) => {
-    setScene(SCENARIOS.find(s => s.id === id));
+    const s = SCENARIOS.find(s => s.id === id);
+    if (!s) return;
+    if (playedToday.has(id)) return;
+    if (AGE_RANK[s.age] < maxAge) return; // 不能往回选小年龄
+    if (AGE_RANK[s.age] > maxAge) setMaxAge(AGE_RANK[s.age]);
+    setScene(s);
     setResult(null); setPhase("scene");
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const choose = (choice) => {
@@ -267,16 +490,47 @@ function App() {
     setChosenIcon(choice.icon);
     setChosenEffect(choice.effect);
     setHistory(h => [...h, { scene: scene.title, choice: choice.text, icon: choice.icon }].slice(-8));
+    setPlayedToday(prev => new Set([...prev, scene.id]));
     setPhase("result");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const finishDay = () => {
+    const e = pickEnding(stats, achv);
+    setEnding(e);
+    setPhase("ending");
+  };
+
+  const newDay = () => {
+    setPlayedToday(new Set());
+    setMaxAge(2);
+    setEnding(null);
+    setScene(null);
+    setResult(null);
+    setDailyLimit(8 + Math.floor(Math.random() * 5));
+    setPhase("home");
+  };
+
+  const restart = () => {
+    setStats({ qv: 20, sm: 20, hm: 20, liang: 25, secret: 0 });
+    setHistory([]);
+    setAchv(new Set());
+    setPlayedToday(new Set());
+    setMaxAge(2);
+    setEnding(null);
+    setScene(null);
+    setResult(null);
+    setDailyLimit(8 + Math.floor(Math.random() * 5));
+    setPhase("home");
   };
 
   const secretDanger = stats.secret >= 5;
+  const allPlayed = playedToday.size >= dailyLimit;
 
   return (
     <div style={{
       minHeight: "100vh",
       background: "linear-gradient(160deg, #080814 0%, #0f0f25 50%, #08081a 100%)",
+      fontFamily: "'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif",
       color: "#e8e8f0",
     }}>
       <div style={{
@@ -289,10 +543,12 @@ function App() {
           SMTR25 · 帝后向同人 · 虚构创作
         </div>
         <div style={{ fontSize: 20, fontWeight: 800, color: "#e0e7ff", letterSpacing: 1 }}>松河爸爸 × 河民爸爸</div>
-        <div style={{ fontSize: 12, color: "#818cf8", marginTop: 3 }}>孩子模拟器 v2</div>
+        <div style={{ fontSize: 12, color: "#818cf8", marginTop: 3 }}>孩子模拟器 v2.1</div>
       </div>
 
       <div style={{ maxWidth: 460, margin: "0 auto", padding: "0 16px 48px" }}>
+
+        {/* Stats */}
         <div style={{
           background: "rgba(255,255,255,0.035)",
           border: "1px solid rgba(255,255,255,0.07)",
@@ -308,6 +564,7 @@ function App() {
           )}
         </div>
 
+        {/* Achievements */}
         {achv.size > 0 && (
           <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 6 }}>
             {[...achv].map(a => (
@@ -320,8 +577,16 @@ function App() {
           </div>
         )}
 
+        {/* Today progress */}
+        {phase !== "ending" && (
+          <div style={{ marginTop: 10, fontSize: 11, color: "#6b7280", textAlign: "center" }}>
+            今日进度 {playedToday.size}/{dailyLimit} · 当前阶段 {AGE_MAP[Object.keys(AGE_RANK).find(k => AGE_RANK[k] === maxAge)]}
+          </div>
+        )}
+
+        {/* ── HOME ── */}
         {phase === "home" && (
-          <div style={{ marginTop: 20 }}>
+          <div style={{ marginTop: 20 }} className="fadein">
             <div style={{
               padding: "24px 18px", borderRadius: 18,
               background: "rgba(99,102,241,0.07)", border: "1px solid rgba(99,102,241,0.12)",
@@ -336,35 +601,37 @@ function App() {
               </div>
             </div>
 
-            <button onClick={pickRandom} style={{
-              width: "100%", padding: "15px",
-              background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
-              border: "none", borderRadius: 14, color: "#fff",
-              fontSize: 15, fontWeight: 700, cursor: "pointer",
-              boxShadow: "0 4px 20px rgba(99,102,241,0.35)", marginBottom: 14,
-            }}>随机今日事件 🎲</button>
+            {!allPlayed ? (
+              <button onClick={pickRandom} style={{
+                width: "100%", padding: "15px",
+                background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
+                border: "none", borderRadius: 14, color: "#fff",
+                fontSize: 15, fontWeight: 700, cursor: "pointer",
+                boxShadow: "0 4px 20px rgba(99,102,241,0.35)", marginBottom: 14,
+              }}>随机今日事件 🎲</button>
+            ) : (
+              <button onClick={finishDay} style={{
+                width: "100%", padding: "15px",
+                background: "linear-gradient(135deg, #db2777 0%, #f59e0b 100%)",
+                border: "none", borderRadius: 14, color: "#fff",
+                fontSize: 15, fontWeight: 700, cursor: "pointer",
+                boxShadow: "0 4px 20px rgba(219,39,119,0.35)", marginBottom: 14,
+              }}>查看今日结局 ✨</button>
+            )}
 
-            <div style={{ fontSize: 11, color: "#6b7280", textAlign: "center", marginBottom: 10, letterSpacing: 1 }}>
-              — 或选择特定场景 —
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              {SCENARIOS.map(s => (
-                <button key={s.id} onClick={() => pickById(s.id)} style={{
-                  padding: "10px 10px 10px 12px",
-                  background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
-                  borderRadius: 10, color: "#c7d2fe", fontSize: 12, cursor: "pointer",
-                  textAlign: "left", lineHeight: 1.4,
-                }}>
-                  <span style={{ marginRight: 5 }}>{s.icon}</span>{s.title}
-                  {s.age !== "all" && <span style={{ display: "block", fontSize: 10, color: "#6366f1", marginTop: 2 }}>{AGE_MAP[s.age]}</span>}
-                </button>
-              ))}
-            </div>
+            {playedToday.size > 0 && (
+              <button onClick={finishDay} style={{
+                marginTop: 14, width: "100%", padding: "10px",
+                background: "transparent", border: "1px solid rgba(245,158,11,0.4)",
+                borderRadius: 10, color: "#fbbf24", fontSize: 12, cursor: "pointer",
+              }}>提前结束今天，查看结局 →</button>
+            )}
           </div>
         )}
 
+        {/* ── SCENE ── */}
         {phase === "scene" && scene && (
-          <div style={{ marginTop: 20 }}>
+          <div style={{ marginTop: 20 }} className="fadein">
             {scene.age !== "all" && (
               <div style={{ textAlign: "center", marginBottom: 10, fontSize: 12, color: "#6366f1" }}>
                 {AGE_MAP[scene.age]}
@@ -400,8 +667,9 @@ function App() {
           </div>
         )}
 
+        {/* ── RESULT ── */}
         {phase === "result" && (
-          <div style={{ marginTop: 20 }}>
+          <div style={{ marginTop: 20 }} className="fadein">
             <div style={{
               padding: "22px 18px", borderRadius: 18,
               background: "rgba(99,102,241,0.09)", border: "1px solid rgba(99,102,241,0.18)",
@@ -430,12 +698,21 @@ function App() {
               </div>
             </div>
             <div style={{ display: "flex", gap: 9 }}>
-              <button onClick={pickRandom} style={{
-                flex: 1, padding: "13px",
-                background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
-                border: "none", borderRadius: 12, color: "#fff",
-                fontSize: 14, fontWeight: 700, cursor: "pointer",
-              }}>继续今天 🎲</button>
+              {!allPlayed ? (
+                <button onClick={pickRandom} style={{
+                  flex: 1, padding: "13px",
+                  background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
+                  border: "none", borderRadius: 12, color: "#fff",
+                  fontSize: 14, fontWeight: 700, cursor: "pointer",
+                }}>继续今天 🎲</button>
+              ) : (
+                <button onClick={finishDay} style={{
+                  flex: 1, padding: "13px",
+                  background: "linear-gradient(135deg, #db2777, #f59e0b)",
+                  border: "none", borderRadius: 12, color: "#fff",
+                  fontSize: 14, fontWeight: 700, cursor: "pointer",
+                }}>查看今日结局 ✨</button>
+              )}
               <button onClick={() => setPhase("home")} style={{
                 padding: "13px 14px",
                 background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)",
@@ -445,7 +722,42 @@ function App() {
           </div>
         )}
 
-        {history.length > 0 && (
+        {/* ── ENDING ── */}
+        {phase === "ending" && ending && (
+          <div style={{ marginTop: 20 }} className="fadein">
+            <div style={{
+              padding: "26px 20px", borderRadius: 20,
+              background: "linear-gradient(135deg, rgba(219,39,119,0.12), rgba(245,158,11,0.10))",
+              border: "1px solid rgba(245,158,11,0.25)",
+              textAlign: "center", marginBottom: 14,
+            }}>
+              <div style={{ fontSize: 11, color: "#fbbf24", letterSpacing: 4, marginBottom: 8 }}>TODAY'S ENDING</div>
+              <div style={{ fontSize: 48, marginBottom: 8 }}>{ending.icon}</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#fde68a", marginBottom: 12 }}>【{ending.name}】</div>
+              <div style={{
+                fontSize: 13.5, color: "#fef3c7", lineHeight: 2,
+                padding: "14px", background: "rgba(0,0,0,0.2)", borderRadius: 12,
+                textAlign: "left",
+              }}>{ending.text}</div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+              <button onClick={newDay} style={{
+                width: "100%", padding: "14px",
+                background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
+                border: "none", borderRadius: 12, color: "#fff",
+                fontSize: 14, fontWeight: 700, cursor: "pointer",
+              }}>开启新的一天 🌅</button>
+              <button onClick={restart} style={{
+                width: "100%", padding: "11px",
+                background: "transparent", border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 12, color: "#9ca3af", fontSize: 12, cursor: "pointer",
+              }}>从头再来（重置全部数值）</button>
+            </div>
+          </div>
+        )}
+
+        {/* History */}
+        {history.length > 0 && phase !== "ending" && (
           <div style={{ marginTop: 22 }}>
             <div style={{ fontSize: 11, color: "#4b5563", marginBottom: 8, letterSpacing: 2 }}>今日足迹</div>
             {[...history].reverse().map((h, i) => (
